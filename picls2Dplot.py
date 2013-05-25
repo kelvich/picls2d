@@ -1,6 +1,4 @@
-#
 #! /usr/bin/env python
-
 from Tkinter import *
 from tkFileDialog import askdirectory
 import numpy as np
