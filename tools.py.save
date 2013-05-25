@@ -1,0 +1,27 @@
+class tools():
+	        def SpecEvolPlot(self,d,windwidth=2000,step=100,wmin=0.6,wmax=1.5,border='r'):
+                dd=np.array([])
+                Tim=np.arange(windwidth, len(d)-windwidth,step)
+                if border == 'r' :
+                        rowind=2
+                elif border =='l':
+                        rowind=1
+                else:
+                        print 'set the border correct. now its:'+border
+                        return
+                for n in Tim:
+                        dd=np.append(dd, np.abs(rfft(d[n-windwidth:n+windwidth,rowind]))[:-1])
+                Freq=fftfreq(2*windwidth, (d[1,0]-d[0,0])/2.513274123)[:windwidth]
+                nFrqMax= int(wmax/(Freq[1]-Freq[0]))
+                nFrqMin= int(wmin/(Freq[1]-Freq[0]))
+                dd=dd.reshape(len(Tim),len(Freq))[:,nFrqMin:nFrqMax].transpose()
+                self.fig.clear()
+                sp = self.fig.add_subplot(111)
+                pplt = sp.imshow(dd, origin='lower',aspect='auto',extent=[d[Tim[0],0]/2.513274123, d[Tim[-1],0]/2.513274123,Freq[nFrqMin],Freq[nFrqMax]])
+                axis([d[Tim[0],0]/2.513274123, d[Tim[-1],0]/2.513274123, Freq[nFrqMin], Freq[nFrqMax]])
+                xlabel(r'$t/\tau_0$',fontsize=16)
+                ylabel(r'$\langle E_z \rangle_\omega$',fontsize=16)
+                self.fig.colorbar(pplt)
+#               pplt.draw()
+                self.canvas.show()
+                return

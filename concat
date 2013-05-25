@@ -1,0 +1,32 @@
+#! /usr/bin/env python
+from os import listdir
+from numpy import append
+from numpy import sort
+from numpy import arange
+from fnmatch import fnmatch
+from os import system
+from os import sys
+
+def ImgConcat(path1='./fezi/', path2='./dneo/',geom='x1', mask3='img'):
+	names1 = sort(listdir(path1))
+	names2 = sort(listdir(path2))
+	N=min(len(names1), len(names2))
+	system('mkdir '+mask3)
+	for i in arange(N):
+		ind = str(i)
+		while len(ind)< 3:
+			ind = '0'+ind
+		system('montage -mode concatenate -tile '+geom+' '+path1+names1[i]+' '+path2+names2[i]+' '+mask3+'/'+mask3+'-'+ind+'.jpg' )
+
+path1= './' + sys.argv[1] 
+path2= './' + sys.argv[2] 
+mask3 = sys.argv[4]
+
+if sys.argv[3] == 'h':
+	geom='x1'
+elif sys.argv[3] == 'v':
+	geom='1x'
+else:
+	print 'choose geometry'
+
+ImgConcat(path1, path2, geom, mask3)

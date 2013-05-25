@@ -1,0 +1,9 @@
+thanx for choosing the IPython shell. long live python!
+data is stored in the variable 'f' or  'GridData' 
+(and 'f2' for momentums for phase)
+
+to  plot a slice x: (Nx1,Nx2) in the point Ny0 use 
+plot X[Nx1:Nx2:dxN], GridData[Ny0, Nx1:Nx2:dxN]
+
+to plot a 2D region use 
+pcolor X, Y, GridData

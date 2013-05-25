@@ -1,0 +1,386 @@
+import numpy as np
+from pylab import imshow, rfft, fftfreq, savefig, clf, title,fft2
+import mpl_toolkits.mplot3d.axes3d
+#  , xlabel, ylabel, colorbar, axis, gca
+
+
+from mpl_toolkits.mplot3d import Axes3D
+
+from fnmatch import fnmatch
+from os import  listdir
+from namelist import Namelist
+from string import replace
+from dicts import *
+
+
+class tools():
+	def __init__(self,parent):
+		self.fig = parent.fig
+		self.canvas = parent.canvas
+        def SpecEvolPlot(self, d,windwidth=2000,step=100,wmin=0.6,wmax=1.5,border='r'):
+                dd=np.array([])
+                Tim=np.arange(windwidth, len(d)-windwidth,step)
+                if border == 'r' :
+                        rowind=2
+                elif border =='l':
+                        rowind=1
+                else:
+                        print 'set the border correct. now its:'+border
+                        return
+                for n in Tim:
+                        dd=np.append(dd, np.abs(rfft(d[n-windwidth:n+windwidth,rowind]))[:-1])
+                Freq=fftfreq(2*windwidth, (d[1,0]-d[0,0])/2.513274123)[:windwidth]
+                nFrqMax= int(wmax/(Freq[1]-Freq[0]))
+                nFrqMin= int(wmin/(Freq[1]-Freq[0]))
+                dd=dd.reshape(len(Tim),len(Freq))[:,nFrqMin:nFrqMax].transpose()
+                self.fig.clear()
+                sp = self.fig.add_subplot(111)
+                pplt = sp.imshow(dd, origin='lower',aspect='auto',extent=[d[Tim[0],0]/2.513274123, d[Tim[-1],0]/2.513274123,Freq[nFrqMin],Freq[nFrqMax]])
+		sp.set_xlabel(r'$t/\tau_0$',fontsize=16)
+		sp.set_ylabel(r'$\omega/\omega_0$',fontsize=16)
+#                axis([d[Tim[0],0]/2.513274123, d[Tim[-1],0]/2.513274123, Freq[nFrqMin], Freq[nFrqMax]])
+                self.fig.colorbar(pplt)
+                self.canvas.show()
+                return
+		
+	def OptsExtr(self):
+        	names = np.sort(listdir('../'))
+        	for name in names:
+	                if fnmatch(name, '*.in'):
+                        	inputname='../'+name
+	        nxd = int(Namelist(inputname).get('diag').get('par')[0].get('nx_d')[0])
+        	nyd = int(Namelist(inputname).get('diag').get('par')[0].get('ny_d')[0])
+	        N_nodes=int(Namelist(inputname).get('option').get('par')[0].get('nd_para')[0])
+        	ow=float(replace( Namelist(inputname).get('wave').get('par')[0].get('ow')[0],'d','e'))
+	        c=float(replace( Namelist(inputname).get('geom').get('par')[0].get('c')[0],'d','e'))
+	        nnx=int(Namelist(inputname).get('geom').get('par')[0].get('nx')[0])
+	        nny=int(Namelist(inputname).get('geom').get('par')[0].get('ny')[0])
+	        syslx=float(replace( Namelist(inputname).get('geom').get('par')[0].get('system_lx')[0],'d','e'))
+	        sysly=float(replace( Namelist(inputname).get('geom').get('par')[0].get('system_ly')[0],'d','e'))
+	        Nx = nnx/nxd +1
+	        Ny = nny/nyd +1
+	        Lx=ow*syslx/(2*np.pi*c)
+	        Ly=ow*sysly/(2*np.pi*c)
+	        return Nx, Ny, Lx, Ly, N_nodes
+
+	def more_opts_extr(self):
+		names = np.sort(listdir('../'))
+		for name in names:
+                        if fnmatch(name, '*.in'):
+                                inputname='../'+name
+		ndav = int(Namelist(inputname).get('diag').get('par')[0].get('ndav')[0])
+		int_snap = int(Namelist(inputname).get('diag').get('par')[0].get('int_snap')[0])
+		return ndav, int_snap
+
+	def DensDataExtr(self,pathway,TIM,typemask,type, filemask='*_*_*_',reg=None):
+	        names = np.sort(listdir(pathway))
+	        namestime=[]
+	        for name in names:
+                	if fnmatch(name, filemask+TIM+'*'):
+	                        namestime=np.append(namestime,pathway+name)
+	        namestime=np.sort(namestime)
+	        f=np.array([])
+	        for name in namestime:
+                	if open(name).readlines():
+	                        if reg == None:
+                                	a = np.memmap(name, dtype=typemask)
+                        	elif reg == 'zip':
+	                                a = np.loadtxt(name, dtype=typemask)
+                        	f=np.append(f,np.array(a[:][type], dtype='float32'))
+			else:
+				print 'file is missing'
+		print 'got it'
+        	return f
+
+
+        def PhaseDataExtr(self,pathway,TIM,typemask,type, filemask='*_*_*_',reg=None):
+                names = np.sort(listdir(pathway))
+                namestime=[]
+                for name in names:
+                        if fnmatch(name, filemask+TIM+'*'):
+                                namestime=np.append(namestime,pathway+name)
+                namestime=np.sort(namestime)
+                f = np.array([])
+		f2 = np.array([])
+        	wg = np.array([])
+                for name in namestime:
+                        if open(name).readlines():
+                                if reg == None:
+                                        a = np.memmap(name, dtype=typemask)
+                                elif reg == 'zip':
+                                        a = np.loadtxt(name, dtype=typemask)
+
+				f = np.append(f, np.array(a[:][type],dtype='float32'))
+                                f2 = np.append(f2, np.array(a[:]['p'+type],dtype='float32'))
+                                wg = np.append(wg, np.array(a[:]['wght'],dtype='float32'))
+                        else:
+                                print 'file is missing'
+		print str(len(f)) + ' particles read'
+                return f, f2, wg
+
+
+	def ReShaper(self,f):
+	        Nx, Ny, Lx, Ly, N_nodes = self.OptsExtr()
+	        Ny = len(f)/Nx
+	        f=f.reshape( (Ny,Nx))
+	        return f
+
+	def GostCellRemover(self, f):
+		Nx, Ny, Lx, Ly, N_nodes = self.OptsExtr()
+	        arr=np.array([], dtype=int)
+	        Nyp=Ny/N_nodes +1
+	        for i in np.arange(1,N_nodes):
+                	f[Nyp*i,:] = f[Nyp*i,:] + f[(Nyp*i-1),:]
+                	arr=np.append(arr,(Nyp*i-1))
+        	f=np.delete(f,arr,0)
+        	return f
+
+	def StepDef(self,Res):
+#	        Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res,res0, clrmap = ZoomInterp(Res)
+		Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res, clrmap = Res
+	        Nx, Ny, Lx, Ly, N_nodes = self.OptsExtr()
+                res, Nx1, Nx2, Ny1, Ny2 = int(res), float(Nx1),float(Nx2),float(Ny1),float(Ny2)
+                Nx1=np.rint(Nx1*Nx/Lx);Nx2=np.rint(Nx2*Nx/Lx);Ny1=np.rint(Ny1*Nx/Lx);Ny2=np.rint(Ny2*Nx/Lx)
+#		res = int(res)
+#               	Nx1=int(Nx1);Nx2=int(Nx2);Ny1=int(Ny1);Ny2=int(Ny2)
+		if Nx2==0:
+			Nx2 = Nx
+		if Ny2==0:
+                        Ny2 = Ny
+                if Nx2-Nx1 > res:
+	                dx=np.rint((Nx2-Nx1)/res)
+                else:
+	                dx=1
+                if Ny2-Ny1 >res:
+	                dy=np.rint((Ny2-Ny1) /res)
+                else:
+	                dy=1
+	        return dx, dy
+
+	def Plotter(self,f,Res, reg, TIM, out_name = None, frmt='png'):
+	        Nx, Ny, Lx, Ly, N_nodes = self.OptsExtr()
+		ndav, int_step = self.more_opts_extr()
+		actual_time = int(TIM)*int_step/ndav
+	        X=np.linspace(0,Lx,Nx)
+	        Y=np.linspace(0,Ly,Ny)
+	        Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res, clrmap = Res
+		res, Nx1, Nx2, Ny1, Ny2 = int(res), float(Nx1),float(Nx2),float(Ny1),float(Ny2)
+                Nx1=int(np.rint(Nx1*Nx/Lx));Nx2=int(np.rint(Nx2*Nx/Lx))
+		Ny1=int(np.rint(Ny1*Ny/Ly));Ny2=int(np.rint(Ny2*Ny/Ly))
+		if Nx2==0:
+                        Nx2 = Nx-1
+                if Ny2==0:
+                        Ny2 = Ny-1
+	        dx, dy = self.StepDef(Res)
+		extntX=[X[Nx1],X[Nx2]]
+		extntY=[Y[Ny1],Y[Ny2]]
+		def bb(N):
+			if N == 0:
+				return None
+			else:
+				return N
+#		extent=[X[Nx1],X[Nx2],Y[Ny1],Y[Ny2]]
+		Ny1,Ny2,Nx1,Nx2,Fmin, Fmax = map(bb, [Ny1,Ny2,Nx1,Nx2,Fmin, Fmax])			
+
+#	        if Nx2!= None:
+#			extntX=[X[Nx1],X[Nx2]]
+#		else:
+#			extntX=[0,Lx]
+#		if Ny2!= None:
+#			extntY=[X[Nx1],X[Nx2]]
+#		else:
+ #                       extntY=[0,Ly]
+		my_extent=extntX+extntY
+		self.fig.clear()
+		sp = self.fig.add_subplot(111, title='time step = '+str(actual_time)+r'$ \tau_0$')
+	        sp.set_xlabel(r'$x/\lambda_0$',fontsize=16)
+       		sp.set_ylabel(r'$y/\lambda_0$',fontsize=16)
+		pplt = sp.imshow(f[Ny1:Ny2:dy,Nx1:Nx2:dx],vmin=Fmin,vmax=Fmax,extent=my_extent, aspect = 'auto', interpolation=intrp, origin='lower',cmap=clrmap)
+		self.fig.colorbar(pplt)
+#		XX, YY = np.meshgrid(X[Nx1:Nx2:dx], Y[Ny1:Ny2:dy])
+#		sp = Axes3D(self.fig)
+#		sp = self.fig.add_subplot(111, title='time step = '+str(actual_time)+r'$ \tau_0$', projection='3d')
+#		sp.plot_wireframe(XX,YY,f[Ny1:Ny2:dy,Nx1:Nx2:dx],cmap = 'jet',cstride=20,rstride = 20)
+#		sp.plot_surface(XX,YY,f[Ny1:Ny2:dy,Nx1:Nx2:dx],cmap = 'jet',cstride=2,rstride = 2, linewidth=0)
+		self.canvas.show()
+		if reg == 'wrt':
+			self.fig.savefig('./img/'+out_name+'_'+TIM+'.'+frmt)
+			clf()
+		return			
+
+	def PhasePlotter(self, f, f2, wg, Res, comp, reg, TIM, out_name = None, frmt='png'):
+		Nx, Ny, Lx, Ly, N_nodes = self.OptsExtr()
+                ndav, int_step = self.more_opts_extr()
+                actual_time = int(TIM)*int_step/ndav
+		Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res, clrmap = Res
+#		if Nx2!= '0':
+ #                       Nx1=float(Nx1);Nx2=float(Nx2);Ny1=float(Ny1);Ny2=float(Ny2)
+		Nx1=float(Nx1);Nx2=float(Nx2);Ny1=float(Ny1);Ny2=float(Ny2)
+		if len(res.split('x'))>1:
+			resX = int(res.split('x')[0])
+			resY = int(res.split('x')[1])
+		else:
+			resX = int(res)
+			resY = resX
+		if comp == 'y':
+                	LL=Ly
+        	elif comp == 'x' or comp == 'd':
+                	LL=Lx
+		if Nx2 == 0.:
+			Nx2=LL
+		a,b,c = np.histogram2d(f2, f, bins= ( resY, resX ), range=[[Ny1, Ny2],[Nx1, Nx2]], weights=wg)
+#                	a,b,c = np.histogram2d(f2, f, bins= ( resY, resX ), range=[[Ny1, Ny2],[Nx1, Nx2]], weights=wg)
+ #       	else:
+  #              	a,b,c = np.histogram2d(f2, f, bins= ( resY, resX ), range=[[0,0],[0, LL]], weights=wg)
+		if Ny1 == 0. and Ny2 == 0.:
+			eext=[Nx1, Nx2, b[0], b[-1]]
+		else:
+			eext=[Nx1, Nx2, Ny1, Ny2]
+                if Fmin == 0.:
+                         Fmin = None
+                if Fmax == 0.:
+                        Fmax= None
+		self.fig.clear()
+		sp = self.fig.add_subplot(111, title='time step = '+str(actual_time)+r'$ \tau_0$')
+	        if comp == 'x':
+        	        sp.set_xlabel(r'$x/\lambda_0$',fontsize=16)
+                	sp.set_ylabel(r'$p_x/mc$',fontsize=16)
+        	elif comp == 'y':
+	                sp.set_xlabel(r'$y/\lambda_0$',fontsize=16)
+                	sp.set_ylabel(r'$p_y/mc$',fontsize=16)
+        	elif comp == 'd':
+	                xlabel(r'$x/\lambda_0$',fontsize=16)
+                	ylabel(r'$y/\lambda_0$',fontsize=16)
+        	pplt = sp.imshow(a,extent=eext, aspect = 'auto', interpolation= intrp ,cmap = clrmap, origin='lower',vmin = Fmin, vmax = Fmax)
+		self.fig.colorbar(pplt)
+		self.canvas.show()
+		if reg == 'wrt':
+                        self.fig.savefig('./img/'+out_name+'_'+TIM+'.'+frmt)
+                        clf()
+                return
+
+
+	def SpectPlotter(self,f,Res, reg, TIM = None, out_name = None, frmt=None):
+                Nx, Ny, Lx, Ly, N_nodes = self.OptsExtr()
+                ndav, int_step = self.more_opts_extr()
+                actual_time = int(TIM)*int_step/ndav
+                Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res, clrmap, freq_max = Res
+                res, Nx1, Nx2, Ny1, Ny2,freq_max = int(res), float(Nx1),float(Nx2),float(Ny1),float(Ny2), float(freq_max)
+		Nx1=int(np.rint(Nx1*Nx/Lx));Nx2=int(np.rint(Nx2*Nx/Lx)) 
+                Ny1=int(np.rint(Ny1*Ny/Ly));Ny2=int(np.rint(Ny2*Ny/Ly))
+	        dX=Lx/Nx
+	        dY=Ly/Ny
+		if Fmin == 0.:
+                	Fmin = None
+                if Fmax == 0.:
+                        Fmax= None
+                if Nx2==0:
+                        Nx2 = Nx-1
+                if Ny2==0:
+                        Ny2 = Ny-1
+#	        if Ny1 == Ny2:
+#                	plot(fftfreq(Nx2-Nx1, dX), abs(fft(f[Ny1,Nx1:Nx2])))
+#                	axis([0,Fmin,0,Fmax])
+#                	xlabel(r'$k_x/k_0$',fontsize=18)
+#                	ylabel(r'$amplitude$',fontsize=18)
+#        	elif Nx1 == Nx2:
+#	                plot(fftfreq(Ny2-Ny1, dY), abs(fft(f[Ny1:Ny2,Nx1])))
+#                	axis([0,Fmin,0,Fmax])
+#                	xlabel(r'$k_y/k_0$',fontsize=18)
+#                	ylabel(r'$amplitude$',fontsize=18)
+#        	else:
+		dx, dy = self.StepDef(Res[:-1])
+		dx=int(np.ceil(dx/2.))
+		dy=int(np.ceil(dy/2.))
+		print Ny1, Ny2, Nx1, Nx2, dy, dx
+               	aa = abs(fft2(f[Ny1:Ny2,Nx1:Nx2]))[:(Ny2-Ny1)/2:dy,:(Nx2-Nx1)/2:dx]
+               	freqX = fftfreq(Nx2-Nx1, dX)[:(Nx2-Nx1)/2:dx]
+               	freqY = fftfreq(Ny2-Ny1, dY)[:(Ny2-Ny1)/2:dy]
+		self.fig.clear()
+		sp = self.fig.add_subplot(111, title='time step = '+str(actual_time)+r'$ \tau_0$')
+               	pplt = sp.imshow(aa,vmin=Fmin,vmax=Fmax,extent=[freqX[0],freqX[-1],freqY[0],freqY[-1]], aspect = 'auto', interpolation=intrp,cmap = clrmap, origin='lower')
+               	sp.set_xlabel(r'$k_x/k_0$',fontsize=18)
+               	sp.set_ylabel(r'$k_y/k_0$',fontsize=18)
+               	sp.axis([0,freq_max,0,freq_max])
+               	self.fig.colorbar(pplt)
+		self.canvas.show()
+                if reg == 'wrt':
+                        self.fig.savefig('./img/'+out_name+'_'+TIM+'.'+frmt)
+                        clf()
+                return
+
+
+
+
+
+	def SpectSpacePlotter(self,f,Res, reg, ax, TIM = None, out_name = None, frmt=None):
+		Nx, Ny, Lx, Ly, N_nodes = self.OptsExtr()
+                ndav, int_step = self.more_opts_extr()
+                actual_time = int(TIM)*int_step/ndav
+                Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res, clrmap, freq_max = Res
+                res, Nx1, Nx2, Ny1, Ny2,freq_max = int(res), float(Nx1),float(Nx2),float(Ny1),float(Ny2), float(freq_max)
+                Nx1=int(np.rint(Nx1*Nx/Lx));Nx2=int(np.rint(Nx2*Nx/Lx))
+                Ny1=int(np.rint(Ny1*Ny/Ly));Ny2=int(np.rint(Ny2*Ny/Ly))
+                dX=Lx/Nx
+                dY=Ly/Ny
+		X=np.linspace(0,Lx,Nx)
+                Y=np.linspace(0,Ly,Ny)
+                if Fmin == 0.:
+                        Fmin = None
+                if Fmax == 0.:
+                        Fmax= None
+                if Nx2==0:
+                        Nx2 = Nx-1
+                if Ny2==0:
+                        Ny2 = Ny-1
+        	Nx, Ny, Lx, Ly, N_nodes = OptsExtr()
+        	X=linspace(0,Lx,Nx)
+        	Y=linspace(0,Ly,Ny)
+        	dX=Lx/Nx
+        	dY=Ly/Ny
+        	Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res,res0, clrmap = ZoomInterp(Res)
+        	dx, dy = StepDef(Res)
+        	if Nx1!= None:
+	                Nx1=int(Nx1);Nx2=int(Nx2);Ny1=int(Ny1);Ny2=int(Ny2)
+	        else:
+                	return 0
+        	if ax=='x':
+	                Nn1=Nx
+                	Nn2=Ny
+                	Xx=X
+                	Yy=Y
+                	Ll=Ly
+                	ddx=int(round(dx/2.))
+                	ddy=dy
+        	elif ax=='y':
+	                Nn1=Ny
+                	Nn2=Nx
+                	Xx=Y
+                	Yy=X
+                	Ll=Lx
+                	ddx=int(round(dy/2.))
+                	ddy=dx
+                	f=f.transpose()
+        	datFFT =  zeros((Nn2, Nn1/2+1))
+        	XFFT = fftfreq( Nn1, Xx[1])[:Nn1/2+1]
+        	for j in arange(Nn2):
+	                datFFT[j] = rfft(f[j])
+	        imshow(datFFT[::ddy,::ddx],vmin=0,vmax=Fmax,extent=[XFFT[0],XFFT[-1],Yy[0],Yy[-1]], aspect = 'auto',cmap = clrmap, interpolation=intrp,origin='lower')
+	#       pcolor(XFFT[::ddx], Yy[::ddy], datFFT[::ddy,::ddx], vmin=0, vmax=Fmax, cmap = clrmap)
+	        axis([0,Fmin,0,Ll]);colorbar()
+	        if ax=='x':
+                	ylabel(r'$y/\lambda_0$',fontsize=18)
+                	xlabel(r'$k_x/k_0$',fontsize=18)
+        	elif ax=='y':
+	                ylabel(r'$x/\lambda_0$',fontsize=18)
+                	xlabel(r'$k_y/k_0$', fontsize=18)
+        	if reg=='disp':
+	                print 'transferring the image..'
+                	draw()
+                	return
+	#                show()
+	        elif reg == 'wrt':
+                	print 'writing the file'
+                	savefig('./img/'+out_name+'_spctspc_'+TIM+'.'+frmt)
+                	return
+	#                close()
