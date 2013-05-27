@@ -322,11 +322,12 @@ class grid_funcs():
 		self.res_lab = Label(self.res_frm, text="options")
                 self.res_lab.grid(row=0, column=0,columnspan=2)
 
-#		self.res_res_lab = Label(self.res_frm, text="Resolution")
-#                self.res_res_lab.grid(row=1, column=0)
-#                self.res_res_entr = Entry(self.res_frm,width=10)
-#		self.res_res_entr.insert(0,  400)
-#                self.res_res_entr.grid(row=2, column=0)
+# THIS SHOULD BE ACCURATELY DELETED, res is not need anymore!
+		self.res_res_lab = Label(self.res_frm, text="Resolution")
+                self.res_res_lab.grid(row=1, column=0)
+                self.res_res_entr = Entry(self.res_frm,width=10)
+		self.res_res_entr.insert(0,  400)
+                self.res_res_entr.grid(row=2, column=0)
 
                 self.res_cmap_lab = Label(self.res_frm, text="colormap")
                 self.res_cmap_lab.grid(row=3, column=1)
