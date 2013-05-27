@@ -265,7 +265,7 @@ class grid_funcs():
 
         def phs_opts(self):
                 self.res_frm = Frame(self.frm)
-                self.res_frm.grid(row=0, column=4,rowspan=7,stick=N, padx=10)
+                self.res_frm.grid(row=0, column=4,rowspan=9,stick=N, padx=10)
 
 #                self.res_lab = Label(self.res_frm, text="options")
 #                self.res_lab.grid(row=0, column=0,columnspan=2)
@@ -273,8 +273,20 @@ class grid_funcs():
                 self.res_res_lab = Label(self.res_frm, text="resolution")
                 self.res_res_lab.grid(row=1, column=0)
                 self.res_res_entr = Entry(self.res_frm,width=10)
-                self.res_res_entr.insert(0, '400')
+                self.res_res_entr.insert(0, 400)
                 self.res_res_entr.grid(row=2, column=0)
+                
+                self.res_x_res_lab = Label(self.res_frm, text="resolution:x")
+                self.res_x_res_lab.grid(row=8, column=0)
+                self.res_x_res_entr = Entry(self.res_frm,width=10)
+                self.res_x_res_entr.insert(0, 400)
+                self.res_x_res_entr.grid(row=9, column=0)
+                
+                self.res_y_res_lab = Label(self.res_frm, text="resolution:y")
+                self.res_y_res_lab.grid(row=8, column=1)
+                self.res_y_res_entr = Entry(self.res_frm,width=10)
+                self.res_y_res_entr.insert(0, 400)
+                self.res_y_res_entr.grid(row=9, column=1)
 
                 self.res_cmap_lab = Label(self.res_frm, text="colormap")
                 self.res_cmap_lab.grid(row=3, column=0)
@@ -290,6 +302,8 @@ class grid_funcs():
 
         def phs_opts_read(self):
                 res = self.res_res_entr.get()
+                res_x = self.res_x_res_entr.get()
+                res_y = self.res_y_res_entr.get()
                 Fmin= float(self.res_Fval_entr.get().split(':')[0])
                 Fmax= float(self.res_Fval_entr.get().split(':')[1])
 #		EFmin = float(self.res_NRGfilter_entr.get().split(':')[0])
@@ -297,46 +311,58 @@ class grid_funcs():
                 cmap = self.res_cmap_entr.get()
                 if cmap == 'None':
                         cmap = None
-                return Fmin, Fmax, res, cmap
+                return Fmin, Fmax, res, res_x, res_y, cmap
 
 #############  plotting options   ######################################
 
 	def opts(self):
 		self.res_frm = Frame(self.frm)
-		self.res_frm.grid(row=0, column=2,rowspan=7,stick=N, padx=10)
+		self.res_frm.grid(row=0, column=2,rowspan=9,stick=N, padx=10)
 
 		self.res_lab = Label(self.res_frm, text="options")
                 self.res_lab.grid(row=0, column=0,columnspan=2)
 
-		self.res_res_lab = Label(self.res_frm, text="resolution")
-                self.res_res_lab.grid(row=1, column=0)
-                self.res_res_entr = Entry(self.res_frm,width=10)
-		self.res_res_entr.insert(0, '400')
-                self.res_res_entr.grid(row=2, column=0)
+#		self.res_res_lab = Label(self.res_frm, text="Resolution")
+#                self.res_res_lab.grid(row=1, column=0)
+#                self.res_res_entr = Entry(self.res_frm,width=10)
+#		self.res_res_entr.insert(0,  400)
+#                self.res_res_entr.grid(row=2, column=0)
 
                 self.res_cmap_lab = Label(self.res_frm, text="colormap")
-                self.res_cmap_lab.grid(row=1, column=1)
+                self.res_cmap_lab.grid(row=3, column=1)
                 self.res_cmap_entr = Entry(self.res_frm, width=12)
 		self.res_cmap_entr.insert(0, "None")
-                self.res_cmap_entr.grid(row=2, column=1)
+                self.res_cmap_entr.grid(row=4, column=1)
 
                 self.res_Xcoord_lab = Label(self.res_frm, text="Xmin:Xmax")
-                self.res_Xcoord_lab.grid(row=3, column=0)
+                self.res_Xcoord_lab.grid(row=1, column=0)
                 self.res_Xcoord_entr = Entry(self.res_frm,width=9)
-                self.res_Xcoord_entr.grid(row=4, column=0)
+                self.res_Xcoord_entr.grid(row=2, column=0)
 		self.res_Xcoord_entr.insert(0,"0:0")
 
                 self.res_Ycoord_lab = Label(self.res_frm, text="Ymin:Ymax")
-                self.res_Ycoord_lab.grid(row=3, column=1)
+                self.res_Ycoord_lab.grid(row=1, column=1)
                 self.res_Ycoord_entr = Entry(self.res_frm,width=9)
-                self.res_Ycoord_entr.grid(row=4, column=1)
+                self.res_Ycoord_entr.grid(row=2, column=1)
 		self.res_Ycoord_entr.insert(0,"0:0")
 		
 		self.res_Fval_lab = Label(self.res_frm, text="Fmin:Fmax")
-                self.res_Fval_lab.grid(row=5, column=1)
+                self.res_Fval_lab.grid(row=3, column=0)
                 self.res_Fval_entr = Entry(self.res_frm,width=9)
-                self.res_Fval_entr.grid(row=6, column=1)
+                self.res_Fval_entr.grid(row=4, column=0)
 		self.res_Fval_entr.insert(0,"0:0")
+  
+  		self.res_x_res_lab = Label(self.res_frm, text="Resolution:x")
+                self.res_x_res_lab.grid(row=5, column=0)
+                self.res_x_res_entr = Entry(self.res_frm,width=10)
+                self.res_x_res_entr.insert(0,  self.canv.Resolxy()[0])
+                self.res_x_res_entr.grid(row=6, column=0)
+           
+                self.res_y_res_lab = Label(self.res_frm, text="Resolution:y")
+                self.res_y_res_lab.grid(row=5, column=1)
+                self.res_y_res_entr = Entry(self.res_frm,width=10)
+		self.res_y_res_entr.insert(0,  self.canv.Resolxy()[1])
+                self.res_y_res_entr.grid(row=6, column=1)
 
                 self.var_3D = IntVar()
                 self.chek3D = Checkbutton(self.res_frm, text="3D",variable=self.var_3D)
@@ -346,6 +372,8 @@ class grid_funcs():
 		
 	def opts_read(self):
 		res = self.res_res_entr.get()
+  		res_x = self.res_x_res_entr.get()
+    		res_y = self.res_y_res_entr.get()
 		Nx1 = self.res_Xcoord_entr.get().split(':')[0]
                 Nx2 = self.res_Xcoord_entr.get().split(':')[1]
                 Ny1 = self.res_Ycoord_entr.get().split(':')[0]
@@ -359,7 +387,7 @@ class grid_funcs():
                         self.plot_mode = '3D'
                 elif self.var_3D.get() == 0:
                         self.plot_mode = '2D'
-		return Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res, cmap
+		return Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res, res_x, res_y, cmap
 
 
 ####################  spectrum calculus   ####################3
@@ -412,7 +440,7 @@ class grid_funcs():
 	def em_read_trig(self,parent):
 		self.stat_clear()
                 self.folder_name = parent.folder_name
-                Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res, cmp = self.opts_read()
+                Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res, res_x, res_y, cmp = self.opts_read()
                 typ = self.fld_type_read()
                 TIM = self.step_read()
 		if TIM=='::':
@@ -420,7 +448,7 @@ class grid_funcs():
                 comp = self.comp_type_read()
                 add=self.snap_type_read()
                 fname = fnames[self.fname_selected]+typ+comp
-                Res = [Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res, cmp]
+                Res = [Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res, res_x,res_y, cmp]
                 reg=self.reg
                 pathway = self.folder_name + pathways[fname]+add
                 filemask = '*_*_*_'
@@ -430,14 +458,14 @@ class grid_funcs():
 	def em_show_trig(self,parent):
 		self.folder_name = parent.folder_name
 #		self.stat_clear()
-                Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res, cmp = self.opts_read()
+                Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res, res_x, res_y, cmp = self.opts_read()
                 typ = self.fld_type_read()
                 TIM = self.step_read()
                 comp = self.comp_type_read()
                 add=self.snap_type_read()
 		spect_type, freq_min, freq_max,freq2_min, freq2_max = self.spect_opts_read()
                 fname = fnames[self.fname_selected]+typ+comp
-                Res = [Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res, cmp]
+                Res = [Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res, res_x, res_y, cmp]
                 reg=self.reg
                 pathway = self.folder_name + pathways[fname]+add
                 filemask = '*_*_*_'
@@ -467,13 +495,13 @@ class grid_funcs():
 	def den_read_trig(self,parent):
 		self.folder_name = parent.folder_name
 #		self.stat_clear()
-		Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res, cmp = self.opts_read()
+		Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res, res_x, res_y, cmp = self.opts_read()
                 typ = self.part_type_read()
                 TIM = self.step_read()
 		if TIM=='::':
 			print 'cant read all at a time'
                 fname = fnames[self.fname_selected]+typ
-                Res = [Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res, cmp]
+                Res = [Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res, res_x, res_y, cmp]
                 reg=self.reg
                 pathway = self.folder_name + pathways[fname]
                 filemask = '*_*_*_'
@@ -484,12 +512,12 @@ class grid_funcs():
 	def den_show_trig(self,parent):
 		self.folder_name = parent.folder_name
 #		self.stat_clear()
-                Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res, cmp = self.opts_read()
+                Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res, res_x, res_y, cmp = self.opts_read()
 		typ = self.part_type_read()
                 TIM = self.step_read()
 		spect_type,freq_min, freq_max, freq2_min, freq2_max = self.spect_opts_read()
                 fname = fnames[self.fname_selected]+typ
-                Res = [Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res, cmp]
+                Res = [Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res, res_x, res_y, cmp]
                 reg=self.reg
                 pathway = self.folder_name +  pathways[fname]
                 filemask = '*_*_*_'
@@ -522,13 +550,13 @@ class grid_funcs():
         def phase_read_trig(self,parent):
 #		self.stat_clear()
                 self.folder_name = parent.folder_name
-                Fmin, Fmax, res, cmp = self.phs_opts_read()
+                Fmin, Fmax, res, res_x, res_y, cmp = self.phs_opts_read()
                 TIM = self.step_read()
                 typ = self.part_type_read()
 		filt1 = self.filt_read()
                 absc_min, absc_max, ord_min, ord_max, absc_name, ord_name, multi_name = self.phase_comp_read()
                 fname = fnames[self.fname_selected]
-		Res = [Fmin, Fmax,res, cmp, multi_name]
+		Res = [Fmin, Fmax, res, res_x, res_y, cmp, multi_name]
                 reg=self.reg
                 pathway = self.folder_name + pathways[fname]
 		if self.n_ion == 1:
@@ -546,7 +574,7 @@ class grid_funcs():
 		self.folder_name = parent.folder_name
 #		self.stat_clear()
 		spect_type, freq_min, freq_max, freq2_min, freq2_max = self.spect_opts_read()
-                Fmin, Fmax, res, cmp = self.phs_opts_read()
+                Fmin, Fmax, res, res_x, res_y, cmp = self.phs_opts_read()
                 TIM = self.step_read()
                 typ = self.part_type_read()
 		filt1 = self.filt_read()
@@ -554,8 +582,8 @@ class grid_funcs():
                 absc_min, absc_max, ord_min, ord_max, absc_name, ord_name,multi_name = self.phase_comp_read()
 		comp = absc_min, absc_max, ord_min, ord_max, absc_name, ord_name
                 fname = fnames[self.fname_selected]
-                Res_read = [Fmin, Fmax, res, cmp,multi_name]
-		Res = [Fmin, Fmax, res, cmp]
+                Res_read = [Fmin, Fmax, res, res_x, res_y, cmp,multi_name]
+		Res = [Fmin, Fmax, res, res_x, res_y, cmp]
                 reg=self.reg
                 pathway = self.folder_name + pathways[fname]
                 if spect_type == 's':

@@ -45,6 +45,16 @@ class tools():
 	        Ly=ow*sysly/(2*np.pi*c)
 	        return Nx, Ny, Lx, Ly, N_nodes
 
+	def Resolxy(self):
+        	names = np.sort(listdir(self.folder_name+'/'))
+        	for name in names:
+	                if fnmatch(name, '*.in'):
+                        	inputname = self.folder_name +'/'+ name
+				break
+	        nnx=int(Namelist(inputname).get('geom').get('par')[0].get('nx')[0])
+	        nny=int(Namelist(inputname).get('geom').get('par')[0].get('ny')[0])
+	        return nnx, nny
+
 	def more_opts_extr(self):
 		names = np.sort(listdir(self.folder_name+'/'))
 		for name in names:
@@ -94,7 +104,7 @@ class tools():
 
         def PhaseDataExtr(self,pathway,TIM,Res,typemask,type_absc,type_ord, filemask,reg, filt1):
 		self.stat_print("reading..")
-		Fmin, Fmax, res, clrmap, multi_name = Res
+		Fmin, Fmax, res, res_x, res_y, clrmap, multi_name = Res
 		filt1_name, filt1_min, filt1_max, filt2_name, filt2_min, filt2_max = filt1
 		Nx, Ny, Lx, Ly, N_nodes = self.OptsExtr()
 		np_i, np_e, p_mass_i, p_mass_e, no_ion = self.macropart_extr()
@@ -242,20 +252,24 @@ class tools():
         	return f
 
 	def StepDef(self,Res):
-		Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res, clrmap = Res
+		Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res, res_x, res_y, clrmap = Res
 	        Nx, Ny, Lx, Ly, N_nodes = self.OptsExtr()
-                res, Nx1, Nx2, Ny1, Ny2 = int(res), float(Nx1),float(Nx2),float(Ny1),float(Ny2)
+                res, res_x, res_y, Nx1, Nx2, Ny1, Ny2 = int(res), int(res_x), int(res_y), float(Nx1),float(Nx2),float(Ny1),float(Ny2)
                 Nx1=np.rint(Nx1*Nx/Lx);Nx2=np.rint(Nx2*Nx/Lx);Ny1=np.rint(Ny1*Nx/Lx);Ny2=np.rint(Ny2*Nx/Lx)
 		if Nx2==0:
 			Nx2 = Nx
 		if Ny2==0:
                         Ny2 = Ny
-                if Nx2-Nx1 > res:
-	                dx=np.rint((Nx2-Nx1)/res)
+#                if Nx2-Nx1 > res_x:
+                if Nx2-Nx1 > res_x:
+#	                dx=np.rint((Nx2-Nx1)/res)
+	                dx=np.rint((Nx2-Nx1)/res_x)
                 else:
 	                dx=1
-                if Ny2-Ny1 >res:
-	                dy=np.rint((Ny2-Ny1) /res)
+#                if Ny2-Ny1 >res:
+                if Ny2-Ny1 >res_y:
+#	                dy=np.rint((Ny2-Ny1) /res)
+	                dy=np.rint((Ny2-Ny1) /res_y)
                 else:
 	                dy=1
 	        return dx, dy
@@ -266,8 +280,8 @@ class tools():
 		actual_time = int(TIM)*int_step/ndav
 	        X=np.linspace(0,Lx,Nx)
 	        Y=np.linspace(0,Ly,Ny)
-	        Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res, clrmap = Res
-		res, Nx1, Nx2, Ny1, Ny2 = int(res), float(Nx1),float(Nx2),float(Ny1),float(Ny2)
+	        Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res, res_x, res_y, clrmap = Res
+		res, res_x, res_y, Nx1, Nx2, Ny1, Ny2 = int(res), int(res_x), int(res_y), float(Nx1),float(Nx2),float(Ny1),float(Ny2)
                 Nx1=int(np.rint(Nx1*Nx/Lx));Nx2=int(np.rint(Nx2*Nx/Lx))
 		Ny1=int(np.rint(Ny1*Ny/Ly));Ny2=int(np.rint(Ny2*Ny/Ly))
 		if Nx2==0:
@@ -287,8 +301,9 @@ class tools():
 		self.fig.clear()
 		if flag3D == '2D':
 			sp = self.fig.add_subplot(111, title='time step = '+str(actual_time)+r'$ \tau_0$')
-	        	sp.set_xlabel(r'$x/\lambda_0$',fontsize=16)
-       			sp.set_ylabel(r'$y/\lambda_0$',fontsize=16)
+	        	sp.set_xlabel(r'$x/\lambda_0$',fontsize=14)
+       			sp.set_ylabel(r'$y/\lambda_0$',fontsize=14)
+# plot making
 			pplt = sp.imshow(f[Ny1:Ny2:dy,Nx1:Nx2:dx],vmin=Fmin,vmax=Fmax,extent=my_extent, aspect = 'auto', interpolation=intrp, origin='lower',cmap=clrmap)
 			self.fig.colorbar(pplt)
 		if flag3D == '3D':
@@ -309,7 +324,7 @@ class tools():
 		Nx, Ny, Lx, Ly, N_nodes = self.OptsExtr()
                 ndav, int_step, cc = self.more_opts_extr()
                 actual_time = int(TIM)*int_step/ndav
-		Fmin, Fmax, res, clrmap = Res
+		Fmin, Fmax, res, res_x, res_y, clrmap = Res
 		absc_min, absc_max, ord_min, ord_max, absc_name, ord_name = comp
 		if len(res.split('x'))>1:
 			resX = int(res.split('x')[0])
@@ -365,7 +380,7 @@ class tools():
                 Nx, Ny, Lx, Ly, N_nodes = self.OptsExtr()
                 ndav, int_step, cc = self.more_opts_extr()
                 actual_time = int(TIM)*int_step/ndav
-                Fmin, Fmax, res, clrmap, freq_min, freq_max,freq2_min, freq2_max = Res
+                Fmin, Fmax, res, res_x, res_y, clrmap, freq_min, freq_max,freq2_min, freq2_max = Res
 #                freq_min,freq_max = float(freq_min), float(freq_max)
                 absc_min, absc_max, ord_min, ord_max, absc_name, ord_name = comp
 		try:
@@ -418,8 +433,8 @@ class tools():
                 Nx, Ny, Lx, Ly, N_nodes = self.OptsExtr()
                 ndav, int_step, cc = self.more_opts_extr()
                 actual_time = int(TIM)*int_step/ndav
-                Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res, clrmap, freq_min, freq_max,freq2_min, freq2_max = Res
-                res, Nx1, Nx2, Ny1, Ny2, freq_min,freq_max = int(res), float(Nx1),float(Nx2),float(Ny1),float(Ny2), float(freq_min), float(freq_max)
+                Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res, res_x, res_y, clrmap, freq_min, freq_max,freq2_min, freq2_max = Res
+                res, res_x, res_y, Nx1, Nx2, Ny1, Ny2, freq_min,freq_max = int(res), int(res_x), int(res_y), float(Nx1),float(Nx2),float(Ny1),float(Ny2), float(freq_min), float(freq_max)
 		Nx1=int(np.rint(Nx1*Nx/Lx));Nx2=int(np.rint(Nx2*Nx/Lx)) 
                 Ny1=int(np.rint(Ny1*Ny/Ly));Ny2=int(np.rint(Ny2*Ny/Ly))
 	        dX=Lx/Nx
@@ -453,8 +468,8 @@ class tools():
                 if flag3D == '2D':
 			sp = self.fig.add_subplot(111, title='time step = '+str(actual_time)+r'$ \tau_0$')
                		pplt = sp.imshow(aa,vmin=Fmin,vmax=Fmax,extent=[freqX[0],freqX[-1],freqY[0],freqY[-1]], aspect = 'auto', interpolation=intrp,cmap = clrmap, origin='lower')
-               		sp.set_xlabel(r'$k_x/k_0$',fontsize=16)
-               		sp.set_ylabel(r'$k_y/k_0$',fontsize=16)
+               		sp.set_xlabel(r'$k_x/k_0$',fontsize=14)
+               		sp.set_ylabel(r'$k_y/k_0$',fontsize=14)
                		sp.axis((freq_min,freq_max,freq2_min, freq2_max))
                		self.fig.colorbar(pplt)
 		self.canvas.show()
@@ -468,8 +483,8 @@ class tools():
 		Nx, Ny, Lx, Ly, N_nodes = self.OptsExtr()
                 ndav, int_step, cc = self.more_opts_extr()
                 actual_time = int(TIM)*int_step/ndav
-                Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res, clrmap, freq_min, freq_max,freq2_min, freq2_max, ax = Res
-                res, Nx1, Nx2, Ny1, Ny2,freq_max = int(res), float(Nx1),float(Nx2),float(Ny1),float(Ny2), float(freq_max)
+                Nx1, Nx2, Ny1, Ny2, Fmin, Fmax, res, res_x, res_y, clrmap, freq_min, freq_max,freq2_min, freq2_max, ax = Res
+                res, res_x, res_y, Nx1, Nx2, Ny1, Ny2,freq_max = int(res), int(res_x), int(res_y), float(Nx1),float(Nx2),float(Ny1),float(Ny2), float(freq_max)
                 Nx1=int(np.rint(Nx1*Nx/Lx));Nx2=int(np.rint(Nx2*Nx/Lx))
                 Ny1=int(np.rint(Ny1*Ny/Ly));Ny2=int(np.rint(Ny2*Ny/Ly))
                 dX=Lx/Nx
@@ -518,11 +533,11 @@ class tools():
                 if flag3D == '2D':
                 	sp = self.fig.add_subplot(111, title='time step = '+str(actual_time)+r'$ \tau_0$')
 	        	if ax=='x':
-                		sp.set_ylabel(r'$y/\lambda_0$',fontsize=16)
-                		sp.set_xlabel(r'$k_x/k_0$',fontsize=16)
+                		sp.set_ylabel(r'$y/\lambda_0$',fontsize=14)
+                		sp.set_xlabel(r'$k_x/k_0$',fontsize=14)
         		elif ax=='y':
-	               		sp.set_ylabel(r'$x/\lambda_0$',fontsize=16)
-                		sp.set_xlabel(r'$k_y/k_0$', fontsize=16)
+	               		sp.set_ylabel(r'$x/\lambda_0$',fontsize=14)
+                		sp.set_xlabel(r'$k_y/k_0$', fontsize=14)
 	        	pplt = sp.imshow(datFFT[::ddy,::ddx],extent=myextent, aspect = 'auto', interpolation=intrp,origin='lower',vmin=Fmin, vmax=Fmax, cmap = clrmap)
 	        	sp.axis((freq_min,freq_max,0,Ll))
                 	self.fig.colorbar(pplt)
@@ -548,8 +563,8 @@ class tools():
                 self.fig.clear()
                 sp = self.fig.add_subplot(111)
                 pplt = sp.imshow(dd, origin='lower',aspect='auto',extent=[d[Tim[0],0]/(ndav/cc), d[Tim[-1],0]/(ndav/cc),Freq[nFrqMin],Freq[nFrqMax]])
-		sp.set_xlabel(r'$t/\tau_0$',fontsize=16)
-		sp.set_ylabel(r'$\omega/\omega_0$',fontsize=16)
+		sp.set_xlabel(r'$t/\tau_0$',fontsize=14)
+		sp.set_ylabel(r'$\omega/\omega_0$',fontsize=14)
 		self.fig.colorbar(pplt)
                 self.canvas.show()
                 return
@@ -564,9 +579,9 @@ class tools():
 	        	y=i*np.ones(len(d)/2)
 	        	sp.plot(fftfreq(len(d), (d[1,0]-d[0,0])/(ndav/cc))[:len(d)/2], y ,abs(rfft(d[:,i]))[:-1])
 	        	sp.set_xlim3d(wmin,wmax)
-		sp.set_xlabel(r'$\omega/\omega_0$',fontsize=16)
-		sp.set_ylabel('node index',fontsize=16)
-		sp.set_zlabel(r'$\langle E_z \rangle_\omega$',fontsize=16)
+		sp.set_xlabel(r'$\omega/\omega_0$',fontsize=14)
+		sp.set_ylabel('node index',fontsize=14)
+		sp.set_zlabel(r'$\langle E_z \rangle_\omega$',fontsize=14)
 		self.canvas.show()
 
         def TemporalFldPlot(self, d):
@@ -581,7 +596,7 @@ class tools():
         	ll = len(d[0])-1
         	for i in ll-np.arange(ll):
 	                sp.plot(time, i*np.ones(len(time)), d[::res,i])
-		sp.set_xlabel(r'$t/\tau_0$',fontsize=16)
-                sp.set_ylabel('node index',fontsize=16)
-                sp.set_zlabel(r'$E_z$',fontsize=16)
+		sp.set_xlabel(r'$t/\tau_0$',fontsize=14)
+                sp.set_ylabel('node index',fontsize=14)
+                sp.set_zlabel(r'$E_z$',fontsize=14)
                 self.canvas.show()
